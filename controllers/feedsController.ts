@@ -22,14 +22,16 @@ const getFeeds = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const postFeeds = async (req: Request, res: Response, next: NextFunction) => {
-  const { title, description, newsImage, author } = req.body;
+  const { title, description, author } = req.body;
   const createdFeed = new Feeds({
     title,
     description,
     createdAt: new Date(),
-    newsImage,
+    newsImage: req.file?.path,
     author,
   });
+
+  console.log(createdFeed);
 
   try {
     await createdFeed.save();
@@ -38,7 +40,7 @@ const postFeeds = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
 
-  res.status(201).json({ feed: "success" });
+  res.status(201).json({ feed: createdFeed });
 };
 
-export default { getFeeds, postFeeds };
+export { getFeeds, postFeeds };

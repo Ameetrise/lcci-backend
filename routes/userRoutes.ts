@@ -5,6 +5,7 @@ import {
   login,
   getCompanyByUserId,
 } from "../controllers/userController";
+import fileUpload from "../middlewares/file-upload";
 import express from "express";
 
 const userRoutes = express.Router();
@@ -14,6 +15,7 @@ userRoutes.post("/companies", getCompanyByUserId);
 
 userRoutes.post(
   "/signup",
+  fileUpload("users").single("userImage"),
   [
     check("name").not().isEmpty(),
     check("userName").isLength({ min: 4 }),

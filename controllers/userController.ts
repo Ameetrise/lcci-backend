@@ -51,8 +51,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     return next(res.status(404).send({ error: error }));
   }
 
-  const { name, userName, phone, password, userRole, company, isActive } =
-    req.body;
+  const { name, userName, phone, password, userRole, isActive } = req.body;
 
   let existingUser;
   try {
@@ -79,6 +78,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     name,
     userName,
     phone,
+    userImage: req.file?.path,
     userRole,
     password,
     isActive: isActive || true,
@@ -88,7 +88,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     await createdUser.save();
   } catch (err) {
     const error = new HttpError(
-      "Signing up failed, please try again later.",
+      "Signing up failed, please try again later." + err,
       500
     );
     return next(error);
@@ -102,6 +102,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       userId: createdUser.id,
       phone: createdUser.phone,
       userRole: createdUser.userRole,
+      userImage: createdUser.userImage,
       isActive: createdUser.isActive,
     },
   });

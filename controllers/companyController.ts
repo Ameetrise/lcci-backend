@@ -23,10 +23,10 @@ const getCompanies = async (
 };
 
 const postCompany = async (req: Request, res: Response, next: NextFunction) => {
-  const { cName, logo, owner } = req.body;
+  const { cName, owner } = req.body;
   const createdCompany = new Company({
     cName,
-    logo: logo || "logo",
+    cLogo: req.file?.path,
     owner,
   });
 
@@ -37,7 +37,7 @@ const postCompany = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
 
-  res.status(201).json({ company: "success" });
+  res.status(201).json({ company: createdCompany });
 };
 
 const deleteCompany = async (
