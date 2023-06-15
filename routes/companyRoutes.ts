@@ -6,7 +6,10 @@ const router = express.Router();
 router.get("/", companyController.getCompanies);
 router.post(
   "/post",
-  fileUpload("company").single("cLogo"),
+  fileUpload("company").fields([
+    { name: "cLogo", maxCount: 1 },
+    { name: "imageGallery", maxCount: 3 },
+  ]),
   companyController.postCompany
 );
 router.delete("/:cid", companyController.deleteCompany);

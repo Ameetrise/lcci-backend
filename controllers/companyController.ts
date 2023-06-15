@@ -29,8 +29,11 @@ const postCompany = async (req: Request, res: Response, next: NextFunction) => {
   const { cName, owner } = req.body;
   const createdCompany = new Company({
     cName,
-    cLogo: req.file?.path,
+    //@ts-ignore
+    cLogo: req.files.cLogo ? req.files?.cLogo[0].path : "",
     owner,
+    //@ts-ignore
+    imageGallery: req.files?.imageGallery.map((file: any) => file.path),
   });
 
   let user;

@@ -30,7 +30,7 @@ const fileUpload = (path: string) =>
         cb: (error: Error | null, filename: string) => void
       ) => {
         const ext = MIME_TYPE_MAP[file.mimetype];
-        cb(null, uuidv4() + "." + ext);
+        cb(null, file.originalname + "-" + uuidv4() + "." + ext);
       },
     }),
     fileFilter: (
