@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 import { Schema, Types, InferSchemaType } from "mongoose";
-export interface IUser {
+export interface IUser extends Document {
   name: string;
   userName: string;
   password?: string;
@@ -20,7 +20,7 @@ const userSchema = new Schema<IUser>({
   userRole: { type: String, required: true },
   userImage: { type: String, required: false },
   isActive: { type: Boolean, required: true },
-  company: [{ type: String, required: false, ref: "Company" }],
+  company: [{ type: Types.ObjectId, required: false, ref: "Company" }],
 });
 
 export default mongoose.model<IUser>("User", userSchema);

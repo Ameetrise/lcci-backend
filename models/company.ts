@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 import { Schema, Types, InferSchemaType } from "mongoose";
-interface ICompany {
+export interface ICompany extends Document {
   cName: string;
   cLogo: string;
   owner: Types.ObjectId;

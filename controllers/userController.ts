@@ -7,7 +7,7 @@ import Company from "../models/company";
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   let users: any[];
   try {
-    users = await User.find({}, "-password");
+    users = await User.find({}, "-password").populate("company");
   } catch (err) {
     const error = new HttpError(
       "Fetching users failed, please try again later.",
@@ -15,12 +15,6 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     );
     return next(error);
   }
-
-  try {
-    for (let i = 0; i < users.length; i++) {
-      users = await User.find({}).populate("company").exec();
-    }
-  } catch (error) {}
 
   res.json({
     error: null,
