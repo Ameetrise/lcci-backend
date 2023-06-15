@@ -7,7 +7,7 @@ import Company from "../models/company";
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   let users: any[];
   try {
-    users = await User.find({}, "-password").populate("company");
+    users = await User.find({}, "-password").populate({ path: "owner" });
   } catch (err) {
     const error = new HttpError(
       "Fetching users failed, please try again later.",
@@ -108,7 +108,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     existingUser = await User.findOne({ userName: userName })
       .or([{ userName: userName }, { phone: phone }])
-      .populate({ path: "company" })
+      .populate([{ path: "companyList" }, { path: "feedsList" }])
       .exec();
   } catch (err) {
     const error = new HttpError(
@@ -142,17 +142,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     res.status(500).send({ error: error.message, code: error.code });
     return next(error);
   }
-
-  let userCompanies;
-
-  try {
-    userCompanies = await Company.find({ owner: existingUser.id });
-  } catch (error) {
-    res.status(500).send({ error: error, code: 404 });
-    return next(error);
-  }
-
-  res.status(200).send({ user: existingUser, company: userCompanies });
+  res.status(200).send({ user: existingUser });
 };
 
 export { getUsers, signup, login, getCompanyByUserId };

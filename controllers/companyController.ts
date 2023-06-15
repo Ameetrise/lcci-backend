@@ -54,7 +54,7 @@ const postCompany = async (req: Request, res: Response, next: NextFunction) => {
     sess.startTransaction();
     await createdCompany.save({ session: sess });
     //@ts-ignore
-    user.company?.push(createdCompany);
+    user.companyList?.push(createdCompany);
     await user.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
@@ -62,7 +62,7 @@ const postCompany = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
 
-  res.status(201).json({ company: createdCompany });
+  res.status(201).json({ status: "Success", company: createdCompany });
 };
 
 const deleteCompany = async (
@@ -71,9 +71,9 @@ const deleteCompany = async (
   next: NextFunction
 ) => {
   const companyId = req.params.cid;
-  let company;
+  let thisCompany;
   try {
-    company = await Company.findById(companyId).populate("owner");
+    thisCompany = await Company.findById(companyId).populate("owner");
   } catch (err) {
     const error = new HttpError(
       "Something went wrong, could not delete Company.",
@@ -82,7 +82,7 @@ const deleteCompany = async (
     return next(error);
   }
 
-  if (!company) {
+  if (!thisCompany) {
     const error = new HttpError("Could not find company for this id.", 404);
     return next(error);
   }
@@ -90,18 +90,19 @@ const deleteCompany = async (
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
-    await company.deleteOne({ session: sess });
+    await thisCompany.deleteOne({ session: sess });
     //@ts-ignore
-    company.owner.company.pull(company);
+    //delete company in user of owner company.owner
+    await thisCompany.owner.companyList.pull(thisCompany);
     //@ts-ignorets-ignore
-    await company.owner.save({ session: sess });
+    await thisCompany.owner.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError("Could not Delete company." + err, 404);
     return next(error);
   }
 
-  fs.unlink(company.cLogo, (err) => {
+  fs.unlink(thisCompany.cLogo, (err) => {
     console.log(err);
   });
 

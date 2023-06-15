@@ -9,7 +9,8 @@ export interface IUser extends Document {
   userRole: string;
   userImage: string;
   isActive: boolean;
-  company?: Types.ObjectId[];
+  companyList?: Types.ObjectId[];
+  feedsList?: Types.ObjectId[];
 }
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
@@ -20,7 +21,8 @@ const userSchema = new Schema<IUser>({
   userRole: { type: String, required: true },
   userImage: { type: String, required: false },
   isActive: { type: Boolean, required: true },
-  company: [{ type: Types.ObjectId, required: false, ref: "Company" }],
+  companyList: [{ type: Types.ObjectId, required: false, ref: "Company" }],
+  feedsList: [{ type: Types.ObjectId, required: false, ref: "Feed" }],
 });
 
 export default mongoose.model<IUser>("User", userSchema);
