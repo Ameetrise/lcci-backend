@@ -2,7 +2,7 @@ import mongoose, { Document } from "mongoose";
 import { Schema, Types, InferSchemaType } from "mongoose";
 export interface ICompany extends Document {
   cName: string;
-  cLogo: string;
+  cLogo: string | null;
   facebook: string;
   website: string;
   phone: string;
@@ -29,6 +29,6 @@ const companySchema = new Schema<ICompany>({
   owner: { type: Schema.Types.ObjectId, ref: "User" },
 });
 
-export type Company = InferSchemaType<typeof companySchema>;
+export type CompanyType = InferSchemaType<typeof companySchema>;
 
 export default mongoose.model<ICompany>("Company", companySchema);
