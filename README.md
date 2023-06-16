@@ -7,3 +7,5 @@ Todo:
 - password hashing
 - thirdparty auth handeling
 - notifications
+-upload excel sheet or csv
+-hosting
