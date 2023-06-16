@@ -14,7 +14,13 @@ router.post(
   companyController.postCompany
 );
 router.patch("/:cid", companyController.updateCompany);
-router.post("/removecLogo", companyController.removeLogo);
+router.post("/removegalleryimage", companyController.removeGalleryImage);
+router.post("/removeclogo", companyController.removeLogo);
+router.post(
+  "/uploadcgallery",
+  fileUpload("company").fields([{ name: "imageGallery", maxCount: 3 }]),
+  companyController.uploadcGallery
+);
 router.post(
   "/uploadcLogo",
   fileUpload("company").single("cLogo"),

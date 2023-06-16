@@ -183,6 +183,102 @@ const updateCompany = async (
   });
 };
 
+const removeGalleryImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const imageName = req.body.imageName;
+  const cId = req.body.cId;
+  let thisCompany;
+  try {
+    thisCompany = await Company.findById(cId);
+  } catch (error: any) {
+    const er = new HttpError(error, 400);
+    return next(er);
+  }
+  if (!thisCompany) {
+    const er = new HttpError("Invalid company id", 400);
+    return next(er);
+  }
+  if (thisCompany.imageGallery.length < 1) {
+    const err = new HttpError("No images found", 404);
+    return next(err);
+  }
+
+  for (let i = 0; i < thisCompany.imageGallery.length; i++) {
+    if (thisCompany.imageGallery[i].toString() === imageName.toString()) {
+      thisCompany.imageGallery.splice(i, 1);
+      fs.unlink(imageName, (err) => {});
+    } else {
+      const er = new HttpError("Invalid image id", 400);
+      return next(er);
+    }
+  }
+  try {
+    await thisCompany.save();
+  } catch (error: any) {
+    const er = new HttpError("Invalid company id: " + error, 400);
+    return next(er);
+  }
+
+  res.json({ status: "Successfully removed", data: thisCompany });
+};
+
+const uploadcGallery = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const cId = req.body.cId;
+  //@ts-ignore
+  const images = req.files.imageGallery;
+  let thisCompany;
+  try {
+    thisCompany = await Company.findById(cId);
+    if (thisCompany?.imageGallery) {
+      if (thisCompany?.imageGallery.length + images?.length > 3) {
+        for (let i = 0; i < images.length; i++) {
+          fs.unlink(images[i].path, (err) => {
+            console.log(err);
+          });
+        }
+        const error = new HttpError(
+          "You can only upload 3 images at once, delete current images to add new ones",
+          400
+        );
+        return next(error);
+      } else {
+        let newImages = images.map((img: any) => {
+          return img.path;
+        });
+        thisCompany.imageGallery = thisCompany.imageGallery.concat(newImages);
+        try {
+          await thisCompany.save();
+        } catch (error: any) {
+          const er = new HttpError(`Couldnot save  + ${error.toString()}`, 500);
+          return next(error);
+        }
+      }
+    }
+  } catch (error: any) {
+    console.log("nocomp");
+
+    const er = new HttpError("Error: " + error, 400);
+    return next(er);
+  }
+  if (!thisCompany) {
+    for (let i = 0; i < images.length; i++) {
+      fs.unlink(images[i].path, (err) => {
+        return;
+      });
+    }
+    const newer = new HttpError("No company found with provided id", 404);
+    return next(newer);
+  }
+  res.json({ data: thisCompany });
+};
+
 const deleteCompany = async (
   req: Request,
   res: Response,
@@ -241,4 +337,6 @@ export default {
   updateCompany,
   removeLogo,
   uploadLogo,
+  uploadcGallery,
+  removeGalleryImage,
 };
