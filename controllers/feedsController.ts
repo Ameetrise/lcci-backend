@@ -107,4 +107,35 @@ const deleteFeed = async (req: Request, res: Response, next: NextFunction) => {
     .json({ error: null, data: { success: "News feed deleted successfully" } });
 };
 
-export { getFeeds, postFeeds, deleteFeed };
+const updateFeeds = async (req: Request, res: Response, next: NextFunction) => {
+  const { title, description } = req.body;
+  const fid = req.params.fid;
+
+  let thisFeeds;
+  try {
+    thisFeeds = await Feeds.findById(fid);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not update feeds.",
+      500
+    );
+    return next(error);
+  }
+
+  if (thisFeeds) {
+    title ? (thisFeeds.title = title) : null;
+    description ? (thisFeeds.description = description) : null;
+    try {
+      await thisFeeds.save();
+    } catch (err) {
+      const error = new HttpError(
+        `Something went wrong, could not update feeds. ${err}`,
+        500
+      );
+      return next(error);
+    }
+
+    res.json({ status: "Success", data: thisFeeds });
+  }
+};
+export { getFeeds, postFeeds, deleteFeed, updateFeeds };
