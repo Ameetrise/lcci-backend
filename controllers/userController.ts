@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
+import bcrypt from "bcryptjs";
 import Company from "../models/company";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -69,13 +70,24 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError(
+      "Could not create user, please try again.",
+      500
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     name,
     userName,
     phone,
     userImage: req.file?.path,
     userRole,
-    password,
+    password: hashedPassword,
     isActive: isActive || true,
   });
 
@@ -146,17 +158,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
   let isValidPassword = false;
   try {
-    isValidPassword = password === existingUser.password ? true : false;
-    if (!isValidPassword) {
-      res.status(500).send({ error: "Invalid Password", code: 500 });
-      return;
-    }
+    //@ts-ignore
+    isValidPassword = bcrypt.compare(password, existingUser.password);
   } catch (err) {
     const error = new HttpError(
       "Could not log you in, please check your credentials and try again.",
       500
     );
-    res.status(500).send({ error: error.message, code: error.code });
+    return next(error);
+  }
+
+  if (!isValidPassword) {
+    const error = new HttpError(
+      "Invalid credentials, could not log you in.",
+      403
+    );
     return next(error);
   }
   let token;

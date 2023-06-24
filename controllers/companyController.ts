@@ -94,7 +94,7 @@ const removeLogo = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
   //@ts-ignore
-  if (thisCompany.owner.toString() !== req.userData.userId) {
+  if (thisCompany?.owner.toString() !== req.userData.userId) {
     const error = new HttpError(
       "You are not allowed to update this company..",
       401
@@ -134,6 +134,14 @@ const uploadLogo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     thisCompany = await Company.findById(cId);
     if (thisCompany) {
+      //@ts-ignore
+      if (thisCompany?.owner.toString() !== req.userData.userId) {
+        const error = new HttpError(
+          "You are not allowed to updateLogo for this company.",
+          401
+        );
+        return next(error);
+      }
       if (thisCompany.cLogo) {
         fs.unlink(thisCompany.cLogo, (err) => {});
       }
@@ -141,15 +149,6 @@ const uploadLogo = async (req: Request, res: Response, next: NextFunction) => {
       await thisCompany.save();
     }
   } catch (error) {}
-
-  //@ts-ignore
-  if (thisCompany.owner.toString() !== req.userData.userId) {
-    const error = new HttpError(
-      "You are not allowed to updateLogo for this company.",
-      401
-    );
-    return next(error);
-  }
 
   res.json({ error: null, data: thisCompany });
 };
@@ -282,16 +281,14 @@ const uploadcGallery = async (
   let thisCompany;
   try {
     thisCompany = await Company.findById(cId);
-
     //@ts-ignore
-    if (thisCompany.owner.toString() !== req.userData.userId) {
+    if (thisCompany?.owner.toString() !== req.userData.userId) {
       const error = new HttpError(
         "You are not allowed to post this company.",
         401
       );
       return next(error);
     }
-
     if (thisCompany?.imageGallery) {
       if (thisCompany?.imageGallery.length + images?.length > 3) {
         for (let i = 0; i < images.length; i++) {
@@ -316,11 +313,23 @@ const uploadcGallery = async (
           return next(error);
         }
       }
+    } else if (thisCompany && !thisCompany?.imageGallery) {
+      let newImages = images.map((img: any) => {
+        return img.path;
+      });
+      thisCompany.imageGallery = [];
+      thisCompany.imageGallery = thisCompany.imageGallery.concat(newImages);
+      console.log("aaaa", thisCompany.imageGallery);
+      try {
+        console.log("hytaas");
+        await thisCompany.save();
+      } catch (error: any) {
+        const er = new HttpError(`Couldnot save  + ${error.toString()}`, 500);
+        return next(error);
+      }
     }
   } catch (error: any) {
-    console.log("nocomp");
-
-    const er = new HttpError("Error: " + error, 400);
+    const er = new HttpError("Error3: " + error, 400);
     return next(er);
   }
   if (!thisCompany) {
@@ -332,6 +341,7 @@ const uploadcGallery = async (
     const newer = new HttpError("No company found with provided id", 404);
     return next(newer);
   }
+  console.log("kfuj");
   res.json({ data: thisCompany });
 };
 
