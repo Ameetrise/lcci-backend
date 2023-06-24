@@ -2,9 +2,11 @@ import companyController from "../controllers/companyController";
 import express from "express";
 import fileUpload from "../middlewares/file-upload";
 import { check } from "express-validator";
+import checkAuth from "../middlewares/check-auth";
 const router = express.Router();
 
 router.get("/", companyController.getCompanies);
+router.use(checkAuth);
 router.post(
   "/post",
   fileUpload("company").fields([

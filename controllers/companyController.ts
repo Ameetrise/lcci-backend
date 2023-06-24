@@ -40,6 +40,14 @@ const postCompany = async (req: Request, res: Response, next: NextFunction) => {
         req.files?.imageGallery.map((file: any) => file.path)
       : null,
   });
+  //@ts-ignore
+  if (createdCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to post this company.",
+      401
+    );
+    return next(error);
+  }
 
   let user;
   try {
@@ -85,6 +93,15 @@ const removeLogo = async (req: Request, res: Response, next: NextFunction) => {
     );
     return next(error);
   }
+  //@ts-ignore
+  if (thisCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to update this company..",
+      401
+    );
+    return next(error);
+  }
+
   if (thisCompany?.cLogo) {
     fs.unlink(thisCompany?.cLogo, async (err) => {
       if (err) {
@@ -125,6 +142,15 @@ const uploadLogo = async (req: Request, res: Response, next: NextFunction) => {
     }
   } catch (error) {}
 
+  //@ts-ignore
+  if (thisCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to updateLogo for this company.",
+      401
+    );
+    return next(error);
+  }
+
   res.json({ error: null, data: thisCompany });
 };
 
@@ -158,6 +184,16 @@ const updateCompany = async (
     );
     return next(error);
   }
+
+  //@ts-ignore
+  if (thisCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to update this company.",
+      401
+    );
+    return next(error);
+  }
+
   if (thisCompany) {
     website ? (thisCompany.website = website) : null;
     facebook ? (thisCompany.facebook = facebook) : null;
@@ -201,6 +237,16 @@ const removeGalleryImage = async (
     const er = new HttpError("Invalid company id", 400);
     return next(er);
   }
+
+  //@ts-ignore
+  if (thisCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to delete this image.",
+      401
+    );
+    return next(error);
+  }
+
   if (thisCompany.imageGallery.length < 1) {
     const err = new HttpError("No images found", 404);
     return next(err);
@@ -236,6 +282,16 @@ const uploadcGallery = async (
   let thisCompany;
   try {
     thisCompany = await Company.findById(cId);
+
+    //@ts-ignore
+    if (thisCompany.owner.toString() !== req.userData.userId) {
+      const error = new HttpError(
+        "You are not allowed to post this company.",
+        401
+      );
+      return next(error);
+    }
+
     if (thisCompany?.imageGallery) {
       if (thisCompany?.imageGallery.length + images?.length > 3) {
         for (let i = 0; i < images.length; i++) {
@@ -292,6 +348,15 @@ const deleteCompany = async (
     const error = new HttpError(
       "Something went wrong, could not delete Company.",
       500
+    );
+    return next(error);
+  }
+
+  //@ts-ignore
+  if (thisCompany.owner.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to delete this company.",
+      401
     );
     return next(error);
   }

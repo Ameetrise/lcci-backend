@@ -49,6 +49,11 @@ const postFeeds = async (req: Request, res: Response, next: NextFunction) => {
     const error = new HttpError("Could not find user for provided id.", 404);
     return next(error);
   }
+  //@ts-ignore
+  if (createdFeed.author.toString() !== req.userData.userId) {
+    const error = new HttpError("You are not allowed to post this feed.", 401);
+    return next(error);
+  }
 
   try {
     const sess = await mongoose.startSession();
@@ -81,6 +86,14 @@ const deleteFeed = async (req: Request, res: Response, next: NextFunction) => {
 
   if (!feed) {
     const error = new HttpError("Could not find Feed for this id.", 404);
+    return next(error);
+  }
+  //@ts-ignore
+  if (feed.author.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You are not allowed to delete this feed.",
+      401
+    );
     return next(error);
   }
 
@@ -119,6 +132,12 @@ const updateFeeds = async (req: Request, res: Response, next: NextFunction) => {
       "Something went wrong, could not update feeds.",
       500
     );
+    return next(error);
+  }
+
+  //@ts-ignore
+  if (feed.author.toString() !== req.userData.userId) {
+    const error = new HttpError("You are not allowed to edit this feed.", 401);
     return next(error);
   }
 

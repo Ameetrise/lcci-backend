@@ -9,7 +9,6 @@ const checkAuth = (req: Request, res: Response, next: NextFunction) => {
   try {
     //@ts-ignore
     const token = req.headers.authorization.split(" ")[1]; // Bearer Token   Bearer v_jxahl!-Jiakdsds...
-    console.log(token);
     if (!token) {
       const error = new HttpError("Authentication failed!", 401);
       return next(error);
