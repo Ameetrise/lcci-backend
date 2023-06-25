@@ -14,7 +14,7 @@ const getCompanies = async (
 ) => {
   let companies;
   try {
-    companies = await Company.find({});
+    companies = await Company.find({}).populate("owner", "-password");
   } catch (err) {
     const error = new HttpError(
       "Fetching users failed, please try again later.",
@@ -184,8 +184,9 @@ const updateCompany = async (
     return next(error);
   }
 
+  console.log("sssr", thisCompany);
   //@ts-ignore
-  if (thisCompany.owner.toString() !== req.userData.userId) {
+  if (thisCompany?.owner.toString() !== req.userData.userId) {
     const error = new HttpError(
       "You are not allowed to update this company.",
       401
@@ -214,7 +215,7 @@ const updateCompany = async (
   }
 
   res.status(200).json({
-    place: thisCompany ? thisCompany.toObject({ getters: true }) : null,
+    data: thisCompany ? thisCompany.toObject({ getters: true }) : null,
   });
 };
 

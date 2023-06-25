@@ -29,7 +29,7 @@ const postFeeds = async (req: Request, res: Response, next: NextFunction) => {
   const createdFeed = new Feeds({
     title,
     description,
-    createdAt: new Date(),
+    createdAt: new Date().getTime(),
     newsImage: req.file?.path,
     author,
   });

@@ -132,11 +132,10 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
-  const { userName, id, password, email, phone } = req.body;
+  const { userName, id, password } = req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ userName: userName })
-      .or([{ userName: userName }, { phone: phone }])
       .populate([{ path: "companyList" }, { path: "feedsList" }])
       .exec();
   } catch (err) {
@@ -144,7 +143,6 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       "Logging in failed, please try again later.",
       500
     );
-    res.status(500).send({ error: error.message, code: error.code });
     return next(error);
   }
 
@@ -153,24 +151,28 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       "Invalid credentials, could not log you in.",
       403
     );
-    res.status(500).send({ error: error.message, code: error.code });
+
     return next(error);
   }
   let isValidPassword = false;
-  try {
+  //@ts-ignore
+  isValidPassword = await bcrypt
     //@ts-ignore
-    isValidPassword = bcrypt.compare(password, existingUser.password);
-  } catch (err) {
-    const error = new HttpError(
-      "Could not log you in, please check your credentials and try again.",
-      500
-    );
-    return next(error);
-  }
-
+    .compare(password, existingUser.password)
+    .then((val) => {
+      return val;
+    })
+    .catch((err) => {
+      const error = new HttpError(
+        "Invalid username or password, could not log you in." + err,
+        403
+      );
+      return next(error);
+    });
+  console.log(isValidPassword);
   if (!isValidPassword) {
     const error = new HttpError(
-      "Invalid credentials, could not log you in.",
+      "Invalid credentials, could not log you in..",
       403
     );
     return next(error);
@@ -189,7 +191,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     );
     return next(error);
   }
-  res.status(200).send({ user: existingUser, token: token });
+
+  res
+    .status(200)
+    .send({ user: existingUser.toObject({ getters: true }), token: token });
 };
 
 export { getUsers, signup, login, getCompanyByUserId };
