@@ -28,6 +28,8 @@ router.post(
   fileUpload("company").single("cLogo"),
   companyController.uploadLogo
 );
+router.get("/getcompanybyuid/:uid", companyController.getCompanyByUserId);
+
 router.delete(
   "/:cid",
   fileUpload("company").fields([
