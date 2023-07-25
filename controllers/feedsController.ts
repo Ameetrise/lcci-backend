@@ -112,7 +112,7 @@ const deleteFeed = async (req: Request, res: Response, next: NextFunction) => {
   }
 
   fs.unlink(feed.newsImage, (err) => {
-    console.log(err);
+    console.log("fletis: ", err);
   });
 
   res

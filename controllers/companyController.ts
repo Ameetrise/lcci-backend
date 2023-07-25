@@ -27,6 +27,44 @@ const getCompanies = async (
   });
 };
 
+const getCompanyByUserId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  console.log("userid: ", req.params.uid);
+  const uid = req.params.uid;
+  let userCompanies;
+  if (!uid) {
+    return next(new HttpError("NO uid provided", 404));
+  }
+  try {
+    userCompanies = await Company.find({ owner: uid });
+  } catch (error) {
+    const er = new HttpError(
+      "Couldnot find any companies for provided user id",
+      404
+    );
+    return next(error);
+  }
+  // //@ts-ignore
+  // if (uid !== req.userData.userId) {
+  //   const error = new HttpError(
+  //     "You are not allowed to post this company.",
+  //     401
+  //   );
+  //   return next(error);
+  // }
+  res.send({
+    data: {
+      companies: userCompanies.map((company) =>
+        company.toObject({ getters: true })
+      ),
+    },
+  });
+  // res.send({ data: userCompanies });
+};
+
 const postCompany = async (req: Request, res: Response, next: NextFunction) => {
   const { cName, owner } = req.body;
   const createdCompany = new Company({
@@ -184,7 +222,6 @@ const updateCompany = async (
     return next(error);
   }
 
-  console.log("sssr", thisCompany);
   //@ts-ignore
   if (thisCompany?.owner.toString() !== req.userData.userId) {
     const error = new HttpError(
@@ -257,8 +294,8 @@ const removeGalleryImage = async (
       thisCompany.imageGallery.splice(i, 1);
       fs.unlink(imageName, (err) => {});
     } else {
-      const er = new HttpError("Invalid image id", 400);
-      return next(er);
+      // const er = new HttpError("Invalid image id", 400);
+      // return next(er);
     }
   }
   try {
@@ -278,10 +315,15 @@ const uploadcGallery = async (
 ) => {
   const cId = req.body.cId;
   //@ts-ignore
+  console.log("tishe", req.files.imageGallery);
+  //@ts-ignore
   const images = req.files.imageGallery;
   let thisCompany;
   try {
     thisCompany = await Company.findById(cId);
+    console.log(thisCompany?.owner.toString());
+    //@ts-ignore
+    console.log(req.userData.userId);
     //@ts-ignore
     if (thisCompany?.owner.toString() !== req.userData.userId) {
       const error = new HttpError(
@@ -294,7 +336,7 @@ const uploadcGallery = async (
       if (thisCompany?.imageGallery.length + images?.length > 3) {
         for (let i = 0; i < images.length; i++) {
           fs.unlink(images[i].path, (err) => {
-            console.log(err);
+            console.log("fles: ", err);
           });
         }
         const error = new HttpError(
@@ -303,6 +345,7 @@ const uploadcGallery = async (
         );
         return next(error);
       } else {
+        console.log("stshere", req.body);
         let newImages = images.map((img: any) => {
           return img.path;
         });
@@ -315,6 +358,7 @@ const uploadcGallery = async (
         }
       }
     } else if (thisCompany && !thisCompany?.imageGallery) {
+      console.log("thisishere");
       let newImages = images.map((img: any) => {
         return img.path;
       });
@@ -342,7 +386,6 @@ const uploadcGallery = async (
     const newer = new HttpError("No company found with provided id", 404);
     return next(newer);
   }
-  console.log("kfuj");
   res.json({ data: thisCompany });
 };
 
@@ -415,4 +458,5 @@ export default {
   uploadLogo,
   uploadcGallery,
   removeGalleryImage,
+  getCompanyByUserId,
 };

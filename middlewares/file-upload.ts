@@ -13,7 +13,7 @@ const MIME_TYPE_MAP: any = {
 
 const fileUpload = (path: string) =>
   multer({
-    limits: { fileSize: 512000 },
+    limits: { fileSize: 5120000 },
     storage: multer.diskStorage({
       destination: (
         req: Request,
@@ -30,7 +30,7 @@ const fileUpload = (path: string) =>
         cb: (error: Error | null, filename: string) => void
       ) => {
         const ext = MIME_TYPE_MAP[file.mimetype];
-        cb(null, file.originalname + "-" + uuidv4() + "." + ext);
+        cb(null, uuidv4() + "." + ext);
       },
     }),
     fileFilter: (
