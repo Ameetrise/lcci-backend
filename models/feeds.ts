@@ -6,6 +6,7 @@ interface IFeeds {
   createdAt: string;
   newsImage: string;
   author: Types.ObjectId;
+  timestamps: true;
 }
 const feedSchema = new Schema<IFeeds>({
   title: { type: String, required: true },

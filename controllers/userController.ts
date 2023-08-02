@@ -1,13 +1,15 @@
 import HttpError from "../models/httpError";
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
 import User from "../models/user";
+import bcrypt from "bcryptjs";
 import Company from "../models/company";
 
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   let users: any[];
   try {
-    users = await User.find({}, "-password").populate("company");
+    users = await User.find({}, "-password").populate({ path: "owner" });
   } catch (err) {
     const error = new HttpError(
       "Fetching users failed, please try again later.",
@@ -68,13 +70,24 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError(
+      "Could not create user, please try again.",
+      500
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     name,
     userName,
     phone,
     userImage: req.file?.path,
     userRole,
-    password,
+    password: hashedPassword,
     isActive: isActive || true,
   });
 
@@ -83,6 +96,21 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) {
     const error = new HttpError(
       "Signing up failed, please try again later." + err,
+      500
+    );
+    return next(error);
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "supersecret_dont_share",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError(
+      "Signing up failed, please try again later.",
       500
     );
     return next(error);
@@ -98,24 +126,23 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       userRole: createdUser.userRole,
       userImage: createdUser.userImage,
       isActive: createdUser.isActive,
+      token: token,
     },
   });
 };
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
-  const { userName, id, password, email, phone } = req.body;
+  const { userName, id, password } = req.body;
   let existingUser;
   try {
     existingUser = await User.findOne({ userName: userName })
-      .or([{ userName: userName }, { phone: phone }])
-      .populate({ path: "company" })
+      .populate([{ path: "companyList" }, { path: "feedsList" }])
       .exec();
   } catch (err) {
     const error = new HttpError(
       "Logging in failed, please try again later.",
       500
     );
-    res.status(500).send({ error: error.message, code: error.code });
     return next(error);
   }
 
@@ -124,35 +151,50 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       "Invalid credentials, could not log you in.",
       403
     );
-    res.status(500).send({ error: error.message, code: error.code });
+
     return next(error);
   }
   let isValidPassword = false;
+  //@ts-ignore
+  isValidPassword = await bcrypt
+    //@ts-ignore
+    .compare(password, existingUser.password)
+    .then((val) => {
+      return val;
+    })
+    .catch((err) => {
+      const error = new HttpError(
+        "Invalid username or password, could not log you in." + err,
+        403
+      );
+      return next(error);
+    });
+  console.log(isValidPassword);
+  if (!isValidPassword) {
+    const error = new HttpError(
+      "Invalid credentials, could not log you in..",
+      403
+    );
+    return next(error);
+  }
+  let token;
   try {
-    isValidPassword = password === existingUser.password ? true : false;
-    if (!isValidPassword) {
-      res.status(500).send({ error: "Invalid Password", code: 500 });
-      return;
-    }
+    token = jwt.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      "supersecret_dont_share",
+      { expiresIn: "1h" }
+    );
   } catch (err) {
     const error = new HttpError(
-      "Could not log you in, please check your credentials and try again.",
+      "Logging in failed, please try again later.",
       500
     );
-    res.status(500).send({ error: error.message, code: error.code });
     return next(error);
   }
 
-  let userCompanies;
-
-  try {
-    userCompanies = await Company.find({ owner: existingUser.id });
-  } catch (error) {
-    res.status(500).send({ error: error, code: 404 });
-    return next(error);
-  }
-
-  res.status(200).send({ user: existingUser, company: userCompanies });
+  res
+    .status(200)
+    .send({ user: existingUser.toObject({ getters: true }), token: token });
 };
 
 export { getUsers, signup, login, getCompanyByUserId };

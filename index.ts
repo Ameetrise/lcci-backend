@@ -31,9 +31,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/feeds", feedsRoutes);
 
 app.use((req, res, next) => {
-  console.log(
-    "runs after next() in controller when there is no action from the controller"
-  );
+  console.log("rnf: ", req.body);
   const error = new HttpError("Route not found", 404);
   res.status(404).send({ error: error.message, code: error.code });
   throw error;
